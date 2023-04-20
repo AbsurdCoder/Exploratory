@@ -64,3 +64,44 @@ class WeightedLoss(torch.nn.Module):
         loss = torch.abs(y_pred - y_true)
         weighted_loss = weights * loss
         return weighted_loss.mean()
+      
+      
+      
+      
+# Using SARMIA
+
+import itertools
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from sklearn.metrics import mean_squared_error
+
+
+
+# Define the range of parameters for the grid search
+p = d = q = range(0, 3)
+pdq = list(itertools.product(p, d, q))
+
+
+
+# Seasonal parameters
+P = D = Q = range(0, 2)
+seasonal_pdq = [(x[0], x[1], x[2], 80) for x in list(itertools.product(P, D, Q))]
+
+# Train and evaluate models
+best_aic = float('inf')
+best_params = None
+best_seasonal_params = None
+
+for param in pdq:
+    for seasonal_param in seasonal_pdq:
+        try:
+            mod = SARIMAX(time_series, order=param, seasonal_order=seasonal_param, enforce_stationarity=False, enforce_invertibility=False)
+            results = mod.fit()
+            if results.aic < best_aic:
+                best_aic = results.aic
+                best_params = param
+                best_seasonal_params = seasonal_param
+        except:
+            continue
+
+print(f'Best ARIMA parameters: {best_params} | Best seasonal parameters: {best_seasonal_params}')
+
